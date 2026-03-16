@@ -1,0 +1,30 @@
+node_modules/
+dist/
+.DS_Store
+
+# Tauri
+src-tauri/target/
+src-tauri/WixTools/
+
+# SQLite — never commit user data
+*.db
+*.db-shm
+*.db-wal
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Claude
+.claude/
+CLAUDE.md

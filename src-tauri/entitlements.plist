@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Required for macOS Keychain access -->
+  <key>keychain-access-groups</key>
+  <array>
+    <string>$(AppIdentifierPrefix)com.daily-ledger.app</string>
+  </array>
+  <!-- Network access for OpenAI API -->
+  <key>com.apple.security.network.client</key>
+  <true/>
+  <!-- App sandbox -->
+  <key>com.apple.security.app-sandbox</key>
+  <true/>
+  <!-- User-selected files read access (for export) -->
+  <key>com.apple.security.files.user-selected.read-write</key>
+  <true/>
+</dict>
+</plist>
