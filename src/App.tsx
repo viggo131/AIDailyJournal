@@ -75,7 +75,7 @@ export default function App() {
         settings={settings}
         journalText={reviewPayload.journalText}
         messages={reviewPayload.messages}
-        onDone={() => handleNavigate("journal")}
+        onDone={() => handleNavigate("dashboard")}
       />
     ) : null,
     history: <HistoryScreen />,

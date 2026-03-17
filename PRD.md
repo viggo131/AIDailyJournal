@@ -363,7 +363,47 @@ Settings keys: `api_key`, `model`, `personal_context`, `memory_depth`, `theme`.
 5. **Model default?** `gpt-4.1` for journal + Patriarch calls. `gpt-5-mini` is the default for the compression agent to keep background call costs low.
 
 
-## 12. Future Improvements
+## 12. Known Gaps (current implementation vs. spec)
+
+The following items from the PRD are either missing, incomplete, or diverge from the spec in the current codebase.
+
+### Not Functional
+
+| Area | Status | Details |
+|---|---|---|
+| **macOS Keychain storage** | Not functional | Rust SecItem code exists in `lib.rs` and the settings UI has a toggle, but `use_keychain` defaults to `false` and Keychain storage does not work reliably at runtime. API key is stored in a local file as a fallback. |
+| **Mood capture** | Not wired | The `mood` column exists in the `entries` table but is always saved as `null`. Neither user-prompted mood rating nor automatic extraction from the Patriarch's `[EMOTIONS]` block is connected to the entry save path. |
+| **Data export** | Missing | PRD specifies a "Export to JSON / Markdown" button in Settings (P1). No export functionality exists. |
+
+### Incomplete / Basic
+
+| Area | Status | Details |
+|---|---|---|
+| **Dashboard ("Chronicle")** | Very basic | Shows streak, total entries, mood sparkline, recurring themes, and last Patriarch quote. However, mood data is always null (see above), so the sparkline never renders meaningful data. No emotion trend charts or deeper insights yet. |
+| **Compression model** | Wrong model name | `constants.ts` sets `COMPRESSION_MODEL = "gpt-4o-mini"` — PRD specifies `gpt-5-mini`. Update the constant once the model is available. |
+| **Search** | Basic string matching | History search uses JavaScript `.includes()` on journal_text/review. PRD's P1 spec calls for SQLite FTS5 full-text search. Functional but slow on large datasets. |
+
+### P1 Features Not Yet Started
+
+These are listed as P1 (v1.1) in the PRD but have no implementation:
+
+- **Entry search with FTS5** — only basic string filter exists
+- **Export to JSON / Markdown** — no export UI or logic
+- **Streak counter in sidebar** — streak exists on Dashboard but not in the sidebar nav
+- **System dark/light mode respect** — app uses a fixed dark theme; no system mode detection or theme override in settings
+
+### P2 Features (future, not started)
+
+- Weekly digest (Patriarch reviews the full week)
+- Semantic memory retrieval (embed + similarity search)
+- Multiple Patriarch personas
+- Global hotkey to start entry
+- Menu bar quick-entry mode
+- iCloud backup of SQLite
+
+---
+
+## 13. Future Improvements
 
 - lets build a task veiw, so if a user says they need some kind of completed task or whatever, it will populate another page, and we can use a calendar veiw to capture this information and keep it stored please. so basically natural language to putting it directly into the view
 - iCloud backup of SQLite (opt-in)

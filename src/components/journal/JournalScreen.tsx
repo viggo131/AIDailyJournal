@@ -52,6 +52,13 @@ export function JournalScreen({ apiKey, settings, onComplete }: JournalScreenPro
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat.messages]);
 
+  // Auto-show confirm dialog when the agent signals [JOURNAL_COMPLETE]
+  useEffect(() => {
+    if (chat.isComplete && !showConfirm) {
+      setShowConfirm(true);
+    }
+  }, [chat.isComplete]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleDone = () => setShowConfirm(true);
 
   const handleConfirm = () => {
