@@ -15,11 +15,10 @@ interface UseChatParams {
 }
 
 export function useChat({ apiKey, systemPrompt, model }: UseChatParams) {
-  const opener = getRandomOpener();
-
-  // Start with the random opener — no API call
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: opener },
+  // Start with a random opener — no API call. Lazy initializer so the opener
+  // is chosen once per session, not recomputed on every render.
+  const [messages, setMessages] = useState<Message[]>(() => [
+    { role: "assistant", content: getRandomOpener() },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
@@ -33,8 +32,8 @@ export function useChat({ apiKey, systemPrompt, model }: UseChatParams) {
     .join("\n\n");
 
   const send = useCallback(
-    async (content: string) => {
-      if (isLoading || isComplete || !content.trim()) return;
+    async (content: string): Promise<boolean> => {
+      if (isLoading || isComplete || !content.trim()) return false;
 
       const userMsg: Message = { role: "user", content: content.trim() };
       const updated = [...messages, userMsg];
@@ -61,6 +60,7 @@ export function useChat({ apiKey, systemPrompt, model }: UseChatParams) {
         if (isJournalComplete) {
           setIsComplete(true);
         }
+        return true;
       } catch (err) {
         if (err instanceof AuthError) {
           setError({ type: "auth", message: err.message });
@@ -73,6 +73,7 @@ export function useChat({ apiKey, systemPrompt, model }: UseChatParams) {
         }
         // Remove the user message so they can retry
         setMessages(messages);
+        return false;
       } finally {
         setIsLoading(false);
       }

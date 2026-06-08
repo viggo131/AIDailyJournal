@@ -4,7 +4,7 @@ import { Button } from "../ui/Button";
 import { MIN_TURNS_BEFORE_DONE } from "../../constants";
 
 interface InputBarProps {
-  onSend: (text: string) => void;
+  onSend: (text: string) => Promise<boolean>;
   onDone: () => void;
   isLoading: boolean;
   isComplete: boolean;
@@ -18,10 +18,14 @@ export function InputBar({ onSend, onDone, isLoading, isComplete, turnCount }: I
   const canDone = turnCount >= MIN_TURNS_BEFORE_DONE && !isLoading;
   const canSend = value.trim().length > 0 && !isLoading && !isComplete;
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!canSend) return;
-    onSend(value.trim());
+    const text = value.trim();
+    // Clear optimistically, but restore the text if the send fails so the
+    // user doesn't lose what they wrote on a network/server error.
     setValue("");
+    const ok = await onSend(text);
+    if (!ok) setValue((current) => (current === "" ? text : current));
   };
 
   // Cmd+Return to send

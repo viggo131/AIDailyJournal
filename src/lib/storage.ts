@@ -14,6 +14,16 @@ async function getDb(): Promise<Database> {
   return _db;
 }
 
+/** Parse a stored conversation JSON column, tolerating corrupt/legacy rows. */
+function parseConversation(raw: string): Message[] {
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as Message[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 // ─── Settings ────────────────────────────────────────────────────────────────
 
 export async function getSetting(key: string): Promise<string | null> {
@@ -82,7 +92,7 @@ export async function getEntryByDate(date: string): Promise<Entry | null> {
   const row = rows[0];
   return {
     ...row,
-    conversation: JSON.parse(row.conversation) as Message[],
+    conversation: parseConversation(row.conversation),
   };
 }
 
@@ -95,7 +105,7 @@ export async function getAllEntries(): Promise<Entry[]> {
   );
   return rows.map((row) => ({
     ...row,
-    conversation: JSON.parse(row.conversation) as Message[],
+    conversation: parseConversation(row.conversation),
   }));
 }
 
@@ -103,10 +113,25 @@ export async function saveEntry(
   entry: Omit<Entry, "id" | "created_at">
 ): Promise<Entry> {
   const db = await getDb();
-  const id = crypto.randomUUID();
-  const created_at = new Date().toISOString();
   const conversationJson = JSON.stringify(entry.conversation);
 
+  // `date` is UNIQUE. If a row already exists for this date (e.g. "Reflect
+  // Again", or a prior partial save), UPDATE it in place — keeping the
+  // original id/created_at — instead of a plain INSERT that would throw a
+  // constraint violation.
+  const existing = await getEntryByDate(entry.date);
+  if (existing) {
+    await db.execute(
+      `UPDATE entries
+         SET conversation = $1, journal_text = $2, review = $3, mood = $4
+       WHERE date = $5`,
+      [conversationJson, entry.journal_text, entry.review, entry.mood, entry.date]
+    );
+    return { ...existing, ...entry, id: existing.id, created_at: existing.created_at };
+  }
+
+  const id = crypto.randomUUID();
+  const created_at = new Date().toISOString();
   await db.execute(
     `INSERT INTO entries (id, date, created_at, conversation, journal_text, review, mood)
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -114,6 +139,11 @@ export async function saveEntry(
   );
 
   return { id, created_at, ...entry };
+}
+
+export async function updateEntryMood(entryId: string, mood: number | null): Promise<void> {
+  const db = await getDb();
+  await db.execute("UPDATE entries SET mood = $1 WHERE id = $2", [mood, entryId]);
 }
 
 // ─── Memories ────────────────────────────────────────────────────────────────

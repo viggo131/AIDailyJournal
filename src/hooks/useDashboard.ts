@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getAllEntries, getMemoriesByDepth } from "../lib/storage";
 import { Entry, Memory } from "../lib/types";
+import { localDateStr } from "../constants";
 
 export interface DashboardData {
   streak: number;
@@ -14,11 +15,13 @@ export interface DashboardData {
 
 function computeStreak(entries: Entry[]): number {
   if (!entries.length) return 0;
-  const today = new Date().toISOString().split("T")[0];
   const dateSet = new Set(entries.map((e) => e.date));
   let streak = 0;
-  const d = new Date(today + "T12:00:00");
-  while (dateSet.has(d.toISOString().split("T")[0])) {
+  // Walk backwards from today using local calendar dates, matching how
+  // entry dates are stamped (TODAY / localDateStr). Mixing UTC here would
+  // miscount the streak by a day for users far from UTC.
+  const d = new Date();
+  while (dateSet.has(localDateStr(d))) {
     streak++;
     d.setDate(d.getDate() - 1);
   }

@@ -4,7 +4,7 @@
  * All callers MUST pass maxTokens explicitly — no open-ended generation.
  */
 import { Message } from "./types";
-import { DEFAULT_MODEL } from "../constants";
+import { DEFAULT_MODEL, COMPRESSION_MODEL } from "../constants";
 
 // ─── Error types ──────────────────────────────────────────────────────────────
 
@@ -73,7 +73,9 @@ async function callOpenAI(params: CallParams, attempt = 0): Promise<string> {
   if (response.status === 401) throw new AuthError();
 
   if (response.status === 429) {
-    const retryAfter = parseInt(response.headers.get("retry-after") ?? "10", 10) * 1000;
+    // retry-after may be seconds or an HTTP-date; fall back to 10s if unparseable.
+    const parsed = parseInt(response.headers.get("retry-after") ?? "", 10);
+    const retryAfter = (Number.isFinite(parsed) && parsed > 0 ? parsed : 10) * 1000;
     if (attempt === 0) {
       await sleep(retryAfter);
       return callOpenAI(params, 1);
@@ -91,8 +93,22 @@ async function callOpenAI(params: CallParams, attempt = 0): Promise<string> {
 
   if (!response.ok) throw new ServerError();
 
-  const data = await response.json() as { choices: { message: { content: string } }[] };
-  return data.choices[0].message.content;
+  let data: { choices?: { message?: { content?: string | null } }[] };
+  try {
+    data = await response.json();
+  } catch {
+    // 2xx but the body wasn't valid JSON — treat as a server-side problem.
+    throw new ServerError();
+  }
+
+  const content = data.choices?.[0]?.message?.content;
+  // content can be null/empty when finish_reason is "content_filter" or the
+  // model returns nothing. Surface it as a retryable server error rather than
+  // crashing on a property access or silently showing a blank bubble.
+  if (typeof content !== "string" || content.trim() === "") {
+    throw new ServerError();
+  }
+  return content;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -139,5 +155,7 @@ export async function compressEntry(params: {
   system: string;
   messages: Message[];
 }): Promise<string> {
-  return callOpenAI({ ...params, maxTokens: 450 });
+  // Compression always runs on the cheaper model — it's a background
+  // structured-summary task, and this is what the Settings UI advertises.
+  return callOpenAI({ ...params, model: COMPRESSION_MODEL, maxTokens: 450 });
 }

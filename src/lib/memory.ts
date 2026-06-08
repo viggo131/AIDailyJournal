@@ -91,7 +91,10 @@ export function parseMemoryBlock(content: string): {
   const moodMatch = content.match(/^MOOD:\s*(\d)/m);
   const themesMatch = content.match(/^KEY THEMES:\s*(.+)/m);
 
-  const mood = moodMatch ? parseInt(moodMatch[1], 10) : null;
+  // Only accept a mood in the valid 1–5 range; ignore anything the model
+  // emits outside it rather than storing a bogus score.
+  const parsedMood = moodMatch ? parseInt(moodMatch[1], 10) : NaN;
+  const mood = parsedMood >= 1 && parsedMood <= 5 ? parsedMood : null;
   const themes = themesMatch ? themesMatch[1].trim() : null;
 
   return { mood, themes };
