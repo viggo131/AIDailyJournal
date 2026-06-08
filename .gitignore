@@ -28,4 +28,3 @@ src-tauri/gen/schemas/
 
 # Claude
 .claude/
-CLAUDE.md
