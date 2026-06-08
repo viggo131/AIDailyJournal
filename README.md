@@ -95,7 +95,7 @@ npm install -g pnpm
 ### 2. Clone the Repo
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/AIDailyJournal.git
+git clone https://github.com/viggo131/AIDailyJournal.git
 cd AIDailyJournal
 ```
 

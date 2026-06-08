@@ -1,5 +1,3 @@
-import React from "react";
-
 export function Spinner({ label = "Loading…" }: { label?: string }) {
   return (
     <div className="flex items-center gap-2 text-muted text-sm" aria-label={label}>

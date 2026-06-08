@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Settings } from "../../lib/types";
 import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
-import { validateApiKey } from "../../lib/openai";
 
 // ─── Key Storage Card ─────────────────────────────────────────────────────────
 

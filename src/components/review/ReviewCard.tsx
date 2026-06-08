@@ -1,4 +1,3 @@
-import React from "react";
 import { EmotionChart, EmotionData } from "./EmotionChart";
 
 interface ReviewCardProps {

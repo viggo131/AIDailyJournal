@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Entry } from "../../lib/types";
 import { getAllEntries } from "../../lib/storage";
 import { HistoryItem } from "./HistoryItem";

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Textarea } from "../ui/Textarea";
 import { Button } from "../ui/Button";
 import { MIN_TURNS_BEFORE_DONE } from "../../constants";
@@ -47,7 +47,7 @@ export function InputBar({ onSend, onDone, isLoading, isComplete, turnCount }: I
     <div className="border-t border-border p-4 bg-bg">
       <div className="flex gap-3 items-end">
         <Textarea
-          ref={textareaRef as React.Ref<HTMLTextAreaElement>}
+          ref={textareaRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="Write your reply… (⌘↵ to send)"

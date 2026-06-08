@@ -1,4 +1,3 @@
-import React from "react";
 import { Entry } from "../../lib/types";
 import { MessageBubble } from "../journal/MessageBubble";
 import { ReviewCard } from "../review/ReviewCard";

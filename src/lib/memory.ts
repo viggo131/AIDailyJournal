@@ -59,7 +59,7 @@ export async function buildJournalSystemPrompt(depth: number): Promise<string> {
 }
 
 export async function buildPatriarchSystemPrompt(
-  journalText: string,
+  _journalText: string,
   personalContext: string,
   depth: number
 ): Promise<string> {

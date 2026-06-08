@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Settings, Message } from "../../lib/types";
 import { useChat } from "../../hooks/useChat";
 import { useMemories } from "../../hooks/useMemories";

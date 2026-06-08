@@ -4,8 +4,7 @@ import { getEntryByDate, getAllEntries, saveEntry, getMemoryByEntryId, saveMemor
 import { getPatriarchReview, compressEntry } from "../lib/openai";
 import { buildPatriarchSystemPrompt, buildCompressionSystemPrompt, assembleContext, parseMemoryBlock } from "../lib/memory";
 import { estimateTokens } from "../lib/tokens";
-import { COMPRESSION_MODEL, PATRIARCH_CONTEXT_BUDGET, TODAY } from "../constants";
-import { COMPRESSION_SYSTEM_PROMPT } from "../lib/prompts";
+import { PATRIARCH_CONTEXT_BUDGET, TODAY } from "../constants";
 import { AuthError, RateLimitError, NetworkError } from "../lib/openai";
 
 export function useEntries() {
