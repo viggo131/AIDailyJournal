@@ -150,6 +150,8 @@ On first open the app prompts for your OpenAI API key. The key is currently stor
 | `pnpm tauri build` | Build a production `.app` and `.dmg` |
 | `pnpm dev` | Run only the Vite frontend (no Tauri window) |
 | `pnpm build` | Build only the frontend to `dist/` |
+| `pnpm test` | Run the unit/component test suite once (Vitest) |
+| `pnpm test:watch` | Run the test suite in watch mode |
 
 ---
 

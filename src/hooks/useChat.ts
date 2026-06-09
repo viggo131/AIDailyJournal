@@ -85,5 +85,7 @@ export function useChat({ apiKey, systemPrompt, model }: UseChatParams) {
     setMessages(savedMessages);
   }, []);
 
-  return { messages, send, restore, isLoading, isComplete, journalText, turnCount, error };
+  const clearError = useCallback(() => setError(null), []);
+
+  return { messages, send, restore, isLoading, isComplete, journalText, turnCount, error, clearError };
 }

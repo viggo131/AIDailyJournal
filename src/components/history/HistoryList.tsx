@@ -5,22 +5,35 @@ import { HistoryItem } from "./HistoryItem";
 import { EntryDetail } from "./EntryDetail";
 import { Input } from "../ui/Input";
 import { Spinner } from "../ui/Spinner";
+import { ErrorNotice } from "../ui/ErrorNotice";
 
 export function HistoryScreen() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Entry | null>(null);
 
   // Load all entries from SQLite — no API calls
-  useEffect(() => {
+  const load = () => {
+    setIsLoading(true);
+    setError(false);
     getAllEntries()
       .then(setEntries)
+      .catch((err) => {
+        console.error("[history] failed to load entries:", err);
+        setError(true);
+      })
       .finally(() => setIsLoading(false));
-  }, []);
+  };
+  useEffect(load, []);
 
   if (selected) {
     return <EntryDetail entry={selected} onBack={() => setSelected(null)} />;
+  }
+
+  if (error) {
+    return <ErrorNotice message="Couldn't load your entries. Please try again." onRetry={load} />;
   }
 
   const filtered = search.trim()

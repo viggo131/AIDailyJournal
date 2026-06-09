@@ -27,13 +27,16 @@ export function useEntries() {
    * Step 2: Save entry to SQLite.
    * Step 3: Fire-and-forget compression (gpt-5-mini, maxTokens 450).
    */
+  const clearError = useCallback(() => setError(null), []);
+
   const runPipeline = useCallback(
     async (
       journalText: string,
       messages: Message[],
       apiKey: string,
       settings: Settings,
-      onMemorySaved: () => void
+      onMemorySaved: () => void,
+      onMemoryError: () => void
     ): Promise<PipelineResult> => {
       setIsLoading(true);
       setError(null);
@@ -45,7 +48,7 @@ export function useEntries() {
       // one in-flight promise keeps it to a single API call.
       let work = pipelineLocks.get(date);
       if (!work) {
-        work = runPipelineOnce(date, journalText, messages, apiKey, settings, onMemorySaved);
+        work = runPipelineOnce(date, journalText, messages, apiKey, settings, onMemorySaved, onMemoryError);
         pipelineLocks.set(date, work);
         void work.catch(() => {}).then(() => pipelineLocks.delete(date));
       }
@@ -64,7 +67,7 @@ export function useEntries() {
     []
   );
 
-  return { entries, isLoading, error, loadAll, getToday, runPipeline };
+  return { entries, isLoading, error, clearError, loadAll, getToday, runPipeline };
 }
 
 // ─── Pipeline core ────────────────────────────────────────────────────────────
@@ -79,7 +82,8 @@ async function runPipelineOnce(
   messages: Message[],
   apiKey: string,
   settings: Settings,
-  onMemorySaved: () => void
+  onMemorySaved: () => void,
+  onMemoryError: () => void
 ): Promise<PipelineResult> {
   // Step 0: idempotency guard — don't re-run a review that already exists.
   const existing = await getEntryByDate(date);
@@ -110,10 +114,12 @@ async function runPipelineOnce(
     mood: null,
   });
 
-  // Step 3: Background compression (fire-and-forget)
-  compressInBackground(entry, apiKey, settings.memory_depth, onMemorySaved).catch(
-    (err) => console.error("[compression] failed:", err)
-  );
+  // Step 3: Background compression (fire-and-forget). Non-blocking, but the
+  // failure is surfaced to the user via onMemoryError so it isn't silent.
+  compressInBackground(entry, apiKey, settings.memory_depth, onMemorySaved).catch((err) => {
+    console.error("[compression] failed:", err);
+    onMemoryError();
+  });
 
   return { entry, alreadySaved: false };
 }

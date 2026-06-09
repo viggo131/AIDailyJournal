@@ -34,14 +34,21 @@ export function useSettings() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const stored = await getAllSettings();
-      const merged = { ...DEFAULT_SETTINGS, ...stored };
-      const cmd = keyCmd(merged.use_keychain !== false);
-      const key = await invoke<string>(cmd.get).catch(() => null);
-      if (!cancelled) {
-        setSettings(merged);
-        setApiKeyState(key);
-        setIsLoaded(true);
+      try {
+        const stored = await getAllSettings();
+        const merged = { ...DEFAULT_SETTINGS, ...stored };
+        const cmd = keyCmd(merged.use_keychain !== false);
+        const key = await invoke<string>(cmd.get).catch(() => null);
+        if (!cancelled) {
+          setSettings(merged);
+          setApiKeyState(key);
+        }
+      } catch (err) {
+        // Settings load failed — boot with defaults rather than hanging on the
+        // launch spinner. The user lands on setup and can re-enter their key.
+        console.error("[settings] failed to load:", err);
+      } finally {
+        if (!cancelled) setIsLoaded(true);
       }
     })();
     return () => { cancelled = true; };

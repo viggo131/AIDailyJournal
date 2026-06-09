@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { buildJournalSystemPrompt } from "../lib/memory";
+import { JOURNAL_SYSTEM_PROMPT } from "../lib/prompts";
 import { DEFAULT_MEMORY_DEPTH } from "../constants";
 
 interface UseMemoriesResult {
@@ -19,7 +20,15 @@ export function useMemories(depth: number = DEFAULT_MEMORY_DEPTH): UseMemoriesRe
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const prompt = await buildJournalSystemPrompt(depth);
+      let prompt: string;
+      try {
+        prompt = await buildJournalSystemPrompt(depth);
+      } catch (err) {
+        // Memory load failed — degrade gracefully to the base prompt (no
+        // recent context) rather than hanging the journal screen forever.
+        console.error("[memories] failed to assemble context:", err);
+        prompt = JOURNAL_SYSTEM_PROMPT.replace("{{RECENT_CONTEXT}}", "");
+      }
       if (!cancelled) {
         setJournalSystemPrompt(prompt);
         setIsLoading(false);

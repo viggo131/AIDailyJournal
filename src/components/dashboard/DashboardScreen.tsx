@@ -1,5 +1,6 @@
 import React from "react";
 import { useDashboard } from "../../hooks/useDashboard";
+import { ErrorNotice } from "../ui/ErrorNotice";
 
 // ── Mood Sparkline ─────────────────────────────────────────────────────────────
 
@@ -63,7 +64,7 @@ function Label({ children }: { children: React.ReactNode }) {
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export function DashboardScreen() {
-  const { streak, totalEntries, moodHistory, topThemes, lastWisdom, lastEntryDate, isLoaded } = useDashboard();
+  const { streak, totalEntries, moodHistory, topThemes, lastWisdom, lastEntryDate, isLoaded, error } = useDashboard();
 
   const maxCount = topThemes[0]?.count ?? 1;
 
@@ -79,6 +80,10 @@ export function DashboardScreen() {
         </span>
       </div>
     );
+  }
+
+  if (error) {
+    return <ErrorNotice message="Couldn't load your chronicle. Please try again." onRetry={() => window.location.reload()} />;
   }
 
   if (totalEntries === 0) {

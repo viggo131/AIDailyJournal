@@ -11,6 +11,7 @@ export interface DashboardData {
   lastWisdom: string | null;
   lastEntryDate: string | null;
   isLoaded: boolean;
+  error: boolean;
 }
 
 function computeStreak(entries: Entry[]): number {
@@ -65,6 +66,7 @@ const EMPTY: DashboardData = {
   lastWisdom: null,
   lastEntryDate: null,
   isLoaded: false,
+  error: false,
 };
 
 export function useDashboard(): DashboardData {
@@ -72,29 +74,35 @@ export function useDashboard(): DashboardData {
 
   useEffect(() => {
     (async () => {
-      const [entries, memories] = await Promise.all([
-        getAllEntries(),
-        getMemoriesByDepth(200),
-      ]);
+      try {
+        const [entries, memories] = await Promise.all([
+          getAllEntries(),
+          getMemoriesByDepth(200),
+        ]);
 
-      const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date));
-      const lastEntry = sorted[0] ?? null;
+        const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+        const lastEntry = sorted[0] ?? null;
 
-      const moodHistory = sorted
-        .filter((e) => e.mood !== null)
-        .slice(0, 14)
-        .reverse()
-        .map((e) => ({ date: e.date, mood: e.mood! }));
+        const moodHistory = sorted
+          .filter((e) => e.mood !== null)
+          .slice(0, 14)
+          .reverse()
+          .map((e) => ({ date: e.date, mood: e.mood! }));
 
-      setData({
-        streak: computeStreak(entries),
-        totalEntries: entries.length,
-        moodHistory,
-        topThemes: computeTopThemes(memories),
-        lastWisdom: lastEntry ? extractWordToCarry(lastEntry.review) : null,
-        lastEntryDate: lastEntry?.date ?? null,
-        isLoaded: true,
-      });
+        setData({
+          streak: computeStreak(entries),
+          totalEntries: entries.length,
+          moodHistory,
+          topThemes: computeTopThemes(memories),
+          lastWisdom: lastEntry ? extractWordToCarry(lastEntry.review) : null,
+          lastEntryDate: lastEntry?.date ?? null,
+          isLoaded: true,
+          error: false,
+        });
+      } catch (err) {
+        console.error("[dashboard] failed to load:", err);
+        setData({ ...EMPTY, isLoaded: true, error: true });
+      }
     })();
   }, []);
 

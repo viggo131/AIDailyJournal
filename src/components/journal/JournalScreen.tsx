@@ -9,6 +9,7 @@ import { Toast } from "../ui/Toast";
 import { getEntryByDate, getDraft, clearDraft } from "../../lib/storage";
 import { TODAY } from "../../constants";
 import { Button } from "../ui/Button";
+import { ErrorNotice } from "../ui/ErrorNotice";
 
 interface JournalScreenProps {
   apiKey: string;
@@ -19,6 +20,7 @@ interface JournalScreenProps {
 export function JournalScreen({ apiKey, settings, onComplete }: JournalScreenProps) {
   const [started, setStarted] = useState(false);
   const [existingEntry, setExistingEntry] = useState<{ date: string } | null | undefined>(undefined);
+  const [loadError, setLoadError] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -32,9 +34,17 @@ export function JournalScreen({ apiKey, settings, onComplete }: JournalScreenPro
   });
 
   // Check if today already has an entry (no API call)
-  useEffect(() => {
-    getEntryByDate(TODAY()).then((entry) => setExistingEntry(entry ?? null));
-  }, []);
+  const checkExisting = () => {
+    setLoadError(false);
+    getEntryByDate(TODAY())
+      .then((entry) => setExistingEntry(entry ?? null))
+      .catch((err) => {
+        console.error("[journal] failed to read today's entry:", err);
+        setExistingEntry(null);
+        setLoadError(true);
+      });
+  };
+  useEffect(checkExisting, []);
 
   // Restore draft when session starts
   useEffect(() => {
@@ -79,6 +89,16 @@ export function JournalScreen({ apiKey, settings, onComplete }: JournalScreenPro
       <div className="flex h-full items-center justify-center">
         <Spinner label="Preparing your session…" />
       </div>
+    );
+  }
+
+  // Couldn't read local data — surface it instead of silently proceeding.
+  if (loadError && !started) {
+    return (
+      <ErrorNotice
+        message="Couldn't open your journal data. Please try again."
+        onRetry={checkExisting}
+      />
     );
   }
 
@@ -169,7 +189,7 @@ export function JournalScreen({ apiKey, settings, onComplete }: JournalScreenPro
       )}
 
       {/* Error toast */}
-      <Toast error={chat.error} onDismiss={() => {}} />
+      <Toast error={chat.error} onDismiss={chat.clearError} />
     </div>
   );
 }

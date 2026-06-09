@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Settings, Message } from "../../lib/types";
 import { useEntries } from "../../hooks/useEntries";
 import { ReviewCard } from "./ReviewCard";
 import { Spinner } from "../ui/Spinner";
 import { Button } from "../ui/Button";
 import { Toast } from "../ui/Toast";
+import { ErrorNotice } from "../ui/ErrorNotice";
 
 interface ReviewScreenProps {
   apiKey: string;
@@ -21,24 +22,28 @@ export function ReviewScreen({
   messages,
   onDone,
 }: ReviewScreenProps) {
-  const { isLoading, error, runPipeline } = useEntries();
+  const { isLoading, error, clearError, runPipeline } = useEntries();
   const [review, setReview] = useState<string | null>(null);
   const [memorySaved, setMemorySaved] = useState(false);
-  const [didRun, setDidRun] = useState(false);
+  const [memoryFailed, setMemoryFailed] = useState(false);
 
-  useEffect(() => {
-    if (didRun) return;
-    setDidRun(true);
-
+  const runReview = useCallback(() => {
+    clearError();
     runPipeline(
       journalText,
       messages,
       apiKey,
       settings,
-      () => setMemorySaved(true)
+      () => setMemorySaved(true),
+      () => setMemoryFailed(true)
     )
       .then(({ entry }) => setReview(entry.review))
-      .catch(() => {}); // error shown via Toast
+      .catch(() => {}); // Patriarch error shown inline + via Toast
+  }, [apiKey, settings, journalText, messages, runPipeline, clearError]);
+
+  useEffect(() => {
+    runReview();
+    // Run once on mount; the in-flight lock in useEntries dedupes StrictMode.
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const dateLabel = new Date().toLocaleDateString("en-US", {
@@ -60,6 +65,11 @@ export function ReviewScreen({
             {memorySaved && (
               <span className="text-xs text-accent animate-fade-in">✓ Memory saved</span>
             )}
+            {memoryFailed && (
+              <span className="text-xs text-danger animate-fade-in" role="alert">
+                ⚠ Memory not saved
+              </span>
+            )}
             <Button variant="secondary" size="sm" onClick={onDone}>
               Done
             </Button>
@@ -75,10 +85,14 @@ export function ReviewScreen({
           </div>
         )}
 
+        {!isLoading && !review && error && (
+          <ErrorNotice message={error.message} onRetry={runReview} />
+        )}
+
         {review && <ReviewCard review={review} />}
       </div>
 
-      <Toast error={error} onDismiss={() => {}} />
+      <Toast error={error} onDismiss={clearError} />
     </div>
   );
 }

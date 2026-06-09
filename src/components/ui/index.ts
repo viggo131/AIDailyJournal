@@ -5,3 +5,4 @@ export { Card } from "./Card";
 export { Badge } from "./Badge";
 export { Spinner } from "./Spinner";
 export { Toast } from "./Toast";
+export { ErrorNotice } from "./ErrorNotice";
